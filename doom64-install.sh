@@ -26,8 +26,7 @@ if [[ ! -f DOOM64.CE.Maps.LostLevels.pk3 ]]; then
     waddir=/tmp/wad
     zipdir=/tmp/ce
     mapdir=${zipdir}/maps
-    lumpdir=${zipdir}/filter/game-doom
-    for direc in $waddir $zipdir $mapdir $lumpdir; do
+    for direc in $waddir $zipdir $mapdir; do
         mkdir -p $direc
     done
     wadex=patcher/wadex/wadex.py
@@ -42,11 +41,7 @@ if [[ ! -f DOOM64.CE.Maps.LostLevels.pk3 ]]; then
         $flips --apply patcher/$lostpchname $waddir/$mapwadname $mapdir/$lostwadname
         mkdir -p $waddir/$lostname
         python3 $wadex --destination $waddir/$lostname $waddir/$mapwadname
-        $flips --apply patcher/S_${lostname,,[A-Z]}.bps $waddir/$lostname/SECTORS* $lumpdir/S_$lostname
-        mv $waddir/$lostname/LINEDEFS $lumpdir/I_$lostname
-        mv $waddir/$lostname/LIGHTS $lumpdir/L_$lostname
     done
-    cp patcher/LOST00.WAD $mapdir
     cd $zipdir
     zip -r DOOM64.CE.Maps.LostLevels.pk3 .
     mv -t $curdir DOOM64.CE.Maps.LostLevels.pk3

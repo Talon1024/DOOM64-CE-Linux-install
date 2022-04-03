@@ -11,6 +11,12 @@ if [[ -f $flips && ! -x $flips ]]; then
     chmod +x $flips || exit 1
 fi
 
+dir=$(dirname $(realpath -e $0))
+for dfile in $(find $dir/patcher -type f); do
+    odfile=${dfile:$((${#dir}+1))}
+    ln -s $dfile $odfile
+done
+
 # Ensure DOOM64.IWAD is set up
 if [[ ! -f DOOM64.IWAD ]]; then
     if [[ ! -f $steamapps/Doom\ 64/DOOM64.WAD ]]; then

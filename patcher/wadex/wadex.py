@@ -65,8 +65,13 @@ class WADFile:
             self.lumps.append(
                 WADLump(entry_name, stream.read(entry.size)))
 
-    def dump_to_directory(self, directory):
-        for lump in self.lumps:
+    def dump_to_directory(self, directory, lumpnames=None):
+        if lumpnames is None:
+            lumps = self.lumps
+        else:
+            lumps = filter(lambda lu: lu.name in lumpnames, self.lumps)
+
+        for lump in lumps:
             with io.BytesIO(lump.data) as lumpdata:
                 lumpftype = get_file_type(lumpdata)
             lumpath = os.path.join(directory, lump.name) + lumpftype
@@ -79,14 +84,17 @@ if __name__ == "__main__":
         description="Dump all of the lumps in a Doom WAD file.")
     parser.add_argument("wad", help="The WAD file to dump")
     parser.add_argument(
+        "files", nargs="*", help="The lumps to extract from the WAD")
+    parser.add_argument(
         "--destination",
         help="Where to dump the lumps. Uses the current working directory by "
              "default."
     )
     args = parser.parse_args()
     wadfname = getattr(args, "wad")
+    lumps = getattr(args, "files", None)
     destdir = getattr(args, "destination", os.getcwd())
 
     with open(wadfname, "rb") as wadfile:
         wad = WADFile(wadfile)
-        wad.dump_to_directory(destdir)
+        wad.dump_to_directory(destdir, lumps)

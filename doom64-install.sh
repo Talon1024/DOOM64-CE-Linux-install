@@ -11,6 +11,7 @@ if [[ -f $flips && ! -x $flips ]]; then
     chmod +x $flips || exit 1
 fi
 
+# Link files from this repo into the Doom 64 CE directories
 dir=$(dirname $(realpath -e $0))
 for dfile in $(find $dir/patcher -type f); do
     odfile=${dfile:$((${#dir}+1))}
@@ -27,8 +28,8 @@ if [[ ! -f DOOM64.IWAD ]]; then
     fi
 fi
 
+# Extract the lost levels from DOOM64.IWAD and patch them
 if [[ ! -f DOOM64.CE.Maps.LostLevels.pk3 ]]; then
-    # Extract the lost levels from DOOM64.IWAD and patch them
     waddir=/tmp/wad
     zipdir=/tmp/ce
     mapdir=${zipdir}/maps
@@ -36,21 +37,23 @@ if [[ ! -f DOOM64.CE.Maps.LostLevels.pk3 ]]; then
         mkdir -p $direc
     done
     wadex=patcher/wadex/wadex.py
-    python3 $wadex --destination $waddir $steamapps/Doom\ 64/DOOM64.WAD
-    for mapnum in {34..40}; do
-        lostnum=$((mapnum - 33)) # The first of the "Lost Levels" should be LOST01
-        printf -v lostname "LOST%02d" $lostnum
-        printf -v mapname "MAP%02d" $mapnum
-        mapwadname="$mapname.wad"
-        lostpchname="$lostname.bps"
-        lostwadname="$lostname.WAD"
-        $flips --apply patcher/$lostpchname $waddir/$mapwadname $mapdir/$lostwadname
-        mkdir -p $waddir/$lostname
-        python3 $wadex --destination $waddir/$lostname $waddir/$mapwadname
+    cemaps=(LOST{01..07})
+    ogmaps=(MAP{34..40})
+    python3 $wadex $steamapps/Doom\ 64/DOOM64.WAD ${ogmaps[@]} --destination $waddir
+    # Apply each patch
+    for ((index=0; index < ${#ogmaps[@]}; index++)); do
+        cename=${cemaps[$index]}
+        ogname=${ogmaps[$index]}
+        ogwadname="$ogname.wad"
+        cepatchname="$cename.bps"
+        cewadname="$cename.wad"
+        $flips --apply patcher/$cepatchname $waddir/$ogwadname $mapdir/$cewadname
     done
+    # Zip up the package and move it to the Doom 64 CE directory
     cd $zipdir
     zip -r DOOM64.CE.Maps.LostLevels.pk3 .
     mv -t $curdir DOOM64.CE.Maps.LostLevels.pk3
     cd -
+    # Remove temporary files
     rm -rf $waddir $zipdir
 fi
